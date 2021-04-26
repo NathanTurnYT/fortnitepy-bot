@@ -36,6 +36,7 @@ from fortnitepy.ext import commands
 import fortnitepy
 import aiohttp
 import crayons
+import random
 
 
 class PartyCommands(commands.Cog):
@@ -159,9 +160,13 @@ class PartyCommands(commands.Cog):
         help="Kicks the inputted user.\n"
              "Example: !kick Cxnyaa"
     )
-    async def kick(self, ctx: fortnitepy.ext.commands.Context, *, epic_username: str) -> None:
-        user = await self.bot.fetch_user(epic_username)
-        member = self.bot.party.members.get(user.id)
+    async def kick(self, ctx: fortnitepy.ext.commands.Context, *, epic_username: Optional[str] = None) -> None:
+        if epic_username is None:
+            user = await self.bot.fetch_user(ctx.author.display_name)
+            member = self.bot.party.get_member(user.id)
+        else:
+            user = await self.bot.fetch_user(epic_username)
+            member = self.bot.party.get_member(user.id)
 
         if member is None:
             await ctx.send("Failed to find that user, are you sure they're in the party?")
@@ -186,10 +191,10 @@ class PartyCommands(commands.Cog):
     async def promote(self, ctx: fortnitepy.ext.commands.Context, *, epic_username: Optional[str] = None) -> None:
         if epic_username is None:
             user = await self.bot.fetch_user(ctx.author.display_name)
-            member = self.bot.party.members.get(user.id)
+            member = self.bot.party.get_member(user.id)
         else:
             user = await self.bot.fetch_user(epic_username)
-            member = self.bot.party.members.get(user.id)
+            member = self.bot.party.get_member(user.id)
 
         if member is None:
             await ctx.send("Failed to find that user, are you sure they're in the party?")
@@ -201,7 +206,7 @@ class PartyCommands(commands.Cog):
             except fortnitepy.errors.Forbidden:
                 await ctx.send(f"Failed topromote {member.display_name}, as I'm not party leader.")
                 print(crayons.red(self.bot.message % f"[ERROR] "
-                                  "Failed to kick member as I don't have the required permissions."))
+                                  "Failed to promote member as I don't have the required permissions."))
 
     @commands.dm_only()
     @commands.command(
@@ -278,11 +283,11 @@ class PartyCommands(commands.Cog):
             while (100 >= self.bot.party.me.match_players_left > 0
                    and self.bot.party.me.in_match()):
                 await self.bot.party.me.set_in_match(
-                    players_left=self.bot.party.me.match_players_left - py_random.randint(3, 6),
+                    players_left=self.bot.party.me.match_players_left - random.randint(3, 6),
                     started_at=match_time
                 )
 
-                await asyncio.sleep(py_random.randint(45, 65))
+                await asyncio.sleep(random.randint(45, 65))
 
         else:
             await self.bot.party.me.set_in_match(
@@ -444,7 +449,7 @@ class PartyCommands(commands.Cog):
         if self.bot.party.me.leader:
             if party_member is not None:
                 user = await self.bot.fetch_user(party_member)
-                member = self.bot.party.members.get(user.id)
+                member = self.bot.party.get_member(user.id)
 
                 if member is not None:
                     raw_squad_assignments = self.bot.party.meta.get_prop(
